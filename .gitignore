@@ -10,3 +10,4 @@ backend/.robert/
 __pycache__/
 .idea/
 .vscode/ 
+frontend/.angular/

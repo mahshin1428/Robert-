@@ -31,14 +31,14 @@ class In(BaseModel):
 
 # 2. DEVICE: Check for GPU
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"🚀 Using device: {device}")
+print(f"Using device: {device}")
 
 # 3. MODEL: Load once into memory/GPU
-print("⏳ Loading model... please wait.")
+print("Loading model... please wait.")
 model_name = "google/flan-t5-small"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(device)
-print("✅ Model loaded successfully!")
+print("Model loaded successfully!")
 
 @app.post("/generate")
 async def generate(payload: In):
@@ -66,18 +66,19 @@ try:
         ngrok.disconnect(t.public_url)
 
     public_url = ngrok.connect(8000).public_url
-    print(f'\n🌐 PUBLIC URL: {public_url}')
+    print(f' PUBLIC URL: {public_url}')
     print('Use this URL in your local machine to send POST requests.')
 except Exception as e:
     print('ngrok start failed:', e)
 
 # 5. EXECUTION: Run using the existing loop
 if __name__ == "__main__":
-    config = uvicorn.Config(app=app, host='0.0.0.0', port=8000, loop="asyncio")
-    server = uvicorn.Server(config)
-
-    # In Colab, we use 'await' instead of 'uvicorn.run' to avoid the RuntimeError
-    await server.serve()
+    async def run_server():
+        config = uvicorn.Config(app=app, host='0.0.0.0', port=8000, loop="asyncio")
+        server = uvicorn.Server(config)
+        await server.serve()
+    
+    asyncio.run(run_server())
 
 
 

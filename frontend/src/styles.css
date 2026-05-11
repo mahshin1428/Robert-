@@ -1,0 +1,28 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  --bg: #f5efe7;
+  --panel: #fffaf3;
+  --ink: #1e1b18;
+  --muted: #6d655d;
+  --accent: #0f766e;
+  --accent-strong: #134e4a;
+  --border: rgba(30, 27, 24, 0.12);
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 30%),
+    linear-gradient(180deg, #fbf7f0 0%, #f2ebe1 100%);
+  color: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button, input {
+  font: inherit;
+}

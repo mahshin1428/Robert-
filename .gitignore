@@ -1,3 +1,7 @@
 .venv
 *.pyc
 report.md
+.env
+__pycache__/
+.idea/
+.vscode/ 

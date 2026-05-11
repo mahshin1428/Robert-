@@ -2,6 +2,10 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateT
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from datetime import datetime
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_IgmdxuaZ6N4B@ep-wandering-pine-ap3hfmgk-pooler.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
 

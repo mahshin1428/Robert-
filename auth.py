@@ -7,6 +7,10 @@ from sqlalchemy.orm import Session
 from db import get_db, User
 import os
 import hashlib
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")

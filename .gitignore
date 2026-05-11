@@ -1,6 +1,11 @@
 .venv
 *.pyc
 report.md
+trash.*
+frontend/node_modules/
+backend/.venv/
+backend/.robert/
+.claude
 .env
 __pycache__/
 .idea/

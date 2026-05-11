@@ -16,6 +16,10 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class In(BaseModel):
     message: str

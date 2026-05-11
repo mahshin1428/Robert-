@@ -11,48 +11,75 @@ call it. In Colab run these steps:
 
 Notes: Using Colab GPU speeds up generation. Keep the model small (flan-t5-small) to fit.
 """
-
+import os
+import torch
+import uvicorn
+import nest_asyncio
+import asyncio
 from fastapi import FastAPI
 from pydantic import BaseModel
-import uvicorn
-import os
-from dotenv import load_dotenv
+from pyngrok import ngrok
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-# Load environment variables from .env file
-load_dotenv()
+# 1. FIX: Apply nest_asyncio to allow Uvicorn to run inside Colab's loop
+nest_asyncio.apply()
+
+app = FastAPI()
 
 class In(BaseModel):
     message: str
 
-app = FastAPI()
+# 2. DEVICE: Check for GPU
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"🚀 Using device: {device}")
+
+# 3. MODEL: Load once into memory/GPU
+print("⏳ Loading model... please wait.")
+model_name = "google/flan-t5-small"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(device)
+print("✅ Model loaded successfully!")
 
 @app.post("/generate")
-def generate(payload: In):
-    # Lazy load model to reduce startup time in examples
-    global model, tokenizer
-    try:
-        model
-    except NameError:
-        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-        tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small")
-        model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
-
+async def generate(payload: In):
     in_text = payload.message
-    inputs = tokenizer(in_text, return_tensors="pt")
-    outputs = model.generate(**inputs, max_length=200)
+
+    # Prepare inputs and move to GPU
+    inputs = tokenizer(in_text, return_tensors="pt").to(device)
+
+    # Generate response
+    with torch.no_grad():
+        outputs = model.generate(**inputs, max_length=200)
+
     reply = tokenizer.decode(outputs[0], skip_special_tokens=True)
     return {"reply": reply}
 
+# 4. TUNNEL: Setup Ngrok
+# Load token from .env file
+NGROK_TOKEN = os.getenv("NGROK_AUTH_TOKEN")
 
+try:
+    ngrok.set_auth_token(NGROK_TOKEN)
+    # Check if a tunnel is already open to avoid errors on re-run
+    tunnels = ngrok.get_tunnels()
+    for t in tunnels:
+        ngrok.disconnect(t.public_url)
+
+    public_url = ngrok.connect(8000).public_url
+    print(f'\n🌐 PUBLIC URL: {public_url}')
+    print('Use this URL in your local machine to send POST requests.')
+except Exception as e:
+    print('ngrok start failed:', e)
+
+# 5. EXECUTION: Run using the existing loop
 if __name__ == "__main__":
-    # optional: start ngrok automatically if token provided
-    NGROK_AUTH = os.getenv('NGROK_AUTH_TOKEN')
-    if NGROK_AUTH:
-        try:
-            from pyngrok import ngrok
-            ngrok.set_auth_token(NGROK_AUTH)
-            public_url = ngrok.connect(8000).public_url
-            print('Public URL:', public_url)
-        except Exception as e:
-            print('ngrok start failed:', e)
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+    config = uvicorn.Config(app=app, host='0.0.0.0', port=8000, loop="asyncio")
+    server = uvicorn.Server(config)
+
+    # In Colab, we use 'await' instead of 'uvicorn.run' to avoid the RuntimeError
+    await server.serve()
+
+
+
+
+
